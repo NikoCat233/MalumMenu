@@ -333,6 +333,9 @@ public static class Utils
 
         }
 
+        if (player.IsUsingAum())
+            nameTag += $"<color=#FFA500>AUM</color>";
+            
         return nameTag;
     }
 
@@ -501,5 +504,20 @@ public static class Utils_PlayerPickMenu_ShapeshifterPanelSetPlayer
         }
 
         return true; //Open normal shapeshifter menu if not active
+    }
+}
+
+[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
+public static class Utils_DetectAumUsers
+{
+    public static List<int> AumClientId = new();
+    public static bool IsUsingAum(this PlayerControl  player) => AumClientId.Contains(player.GetClientId());
+    public static bool IsUsingAum(this GameData.PlayerInfo player) => AumClientId.Contains(Utils.GetClientById(player.PlayerId).Id);
+    public static void Postfix(PlayerControl __instance, byte callId, MessageReader reader)
+    {
+        if (callId != unchecked((byte)42069)) return;
+
+        if (!AumClientId.Contains(__instance.GetClientId()))
+            AumClientId.Add(__instance.GetClientId());
     }
 }
