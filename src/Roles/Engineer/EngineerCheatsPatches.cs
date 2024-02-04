@@ -25,7 +25,12 @@ public static class EngineerCheats_EngineerRole_FixedUpdate_Postfix
             if (CheatToggles.noVentCooldown){
 
                 __instance.cooldownSecondsRemaining = 0f;
-            
+
+                if (__instance.usesRemaining < 1)
+                {
+                    __instance.usesRemaining = 1;
+                    DestroyableSingleton<HudManager>.Instance.AbilityButton.SetUsesRemaining(__instance.usesRemaining);
+                }
             }
         }
     }
