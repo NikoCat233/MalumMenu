@@ -17,9 +17,26 @@ public static class Utils
     
     public static bool isShip => ShipStatus.Instance != null;
     public static bool isLobby => AmongUsClient.Instance.GameState == AmongUsClient.GameStates.Joined;
+    public static bool isOnlineGame => AmongUsClient.Instance.NetworkMode == NetworkModes.OnlineGame;
+    public static bool isLocalGame => AmongUsClient.Instance.NetworkMode == NetworkModes.LocalGame;
     public static bool isFreePlay => AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay;
     public static bool isPlayer => PlayerControl.LocalPlayer != null;
-    public static bool isHost = AmongUsClient.Instance.AmHost;
+    public static bool isHost => AmongUsClient.Instance.AmHost;
+    public static bool isInGame => AmongUsClient.Instance.GameState == InnerNetClient.GameStates.Started && isPlayer;
+    public static bool isInTask => isInGame && !MeetingHud.Instance; //Prevent some cheats from running in meeting
+    public static bool isMeeting => isInGame && MeetingHud.Instance;
+    public static bool isVoting => isMeeting && MeetingHud.Instance.state is MeetingHud.VoteStates.Voted or MeetingHud.VoteStates.NotVoted;
+    public static bool isProceeding => isMeeting && MeetingHud.Instance.state is MeetingHud.VoteStates.Proceeding;
+    public static bool isExilling => ExileController.Instance != null && !(AirshipIsActive && SpawnInMinigame.Instance.isActiveAndEnabled); //Playing exile animation after meeting finished
+    public static bool isNormalGame => GameOptionsManager.Instance.CurrentGameOptions.GameMode == GameModes.Normal;
+    public static bool isHideNSeek => GameOptionsManager.Instance.CurrentGameOptions.GameMode == GameModes.HideNSeek;
+    public static bool SkeldIsActive => (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId == MapNames.Skeld;
+    public static bool MiraHQIsActive => (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId == MapNames.Mira;
+    public static bool PolusIsActive => (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId == MapNames.Polus;
+    public static bool DleksIsActive => (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId == MapNames.Dleks;
+    public static bool AirshipIsActive => (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId == MapNames.Airship;
+    public static bool FungleIsActive => (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId == MapNames.Fungle;
+
     public static bool utilsOpenChat;
 
     //Adjusts HUD resolution
@@ -179,6 +196,48 @@ public static class Utils
         }
     }
 
+    //Get player control by player Id
+    public static PlayerControl GetPlayerById(byte PlayerId)
+    {
+        return PlayerControl.AllPlayerControls.ToArray().Where(p => p != null).ToArray().FirstOrDefault(pc => pc.PlayerId == PlayerId) ?? null;
+    }
+
+    //Get Client by player control
+    public static ClientData GetClient(this PlayerControl player)
+    {
+        try
+        {
+            var client = AmongUsClient.Instance.allClients.ToArray().FirstOrDefault(cd => cd.Character.PlayerId == player.PlayerId);
+            return client;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    //Get Client Id by player control
+    public static int GetClientId(this PlayerControl player)
+    {
+        if (player == null) return -1;
+        var client = player.GetClient();
+        return client == null ? -1 : client.Id;
+    }
+
+    //Get player client by player Id
+    public static ClientData GetClientById(byte id)
+    {
+        try
+        {
+            var client = AmongUsClient.Instance.allClients.ToArray().FirstOrDefault(cd => cd.Character.PlayerId == id);
+            return client;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     //Get a UnityEngine.KeyCode from a string
     public static KeyCode stringToKeycode(string keyCodeStr){
 
@@ -274,6 +333,9 @@ public static class Utils
 
         }
 
+        if (player.IsUsingAum())
+            nameTag += $"<color=#FFA500>AUM</color>";
+            
         return nameTag;
     }
 
@@ -442,5 +504,20 @@ public static class Utils_PlayerPickMenu_ShapeshifterPanelSetPlayer
         }
 
         return true; //Open normal shapeshifter menu if not active
+    }
+}
+
+[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
+public static class Utils_DetectAumUsers
+{
+    public static List<int> AumClientId = new();
+    public static bool IsUsingAum(this PlayerControl  player) => AumClientId.Contains(player.GetClientId());
+    public static bool IsUsingAum(this GameData.PlayerInfo player) => AumClientId.Contains(Utils.GetClientById(player.PlayerId).Id);
+    public static void Postfix(PlayerControl __instance, byte callId, MessageReader reader)
+    {
+        if (callId != unchecked((byte)42069)) return;
+
+        if (!AumClientId.Contains(__instance.GetClientId()))
+            AumClientId.Add(__instance.GetClientId());
     }
 }
