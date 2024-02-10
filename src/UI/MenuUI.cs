@@ -18,6 +18,7 @@ public class MenuUI : MonoBehaviour
             new ToggleInfo(" NoClip", () => CheatToggles.noClip, x => CheatToggles.noClip = x),
             new ToggleInfo(" SpeedBoost", () => CheatToggles.speedBoost, x => CheatToggles.speedBoost = x),
             new ToggleInfo(" ReportBody", () => CheatToggles.reportBody, x => CheatToggles.reportBody = x),
+            new ToggleInfo(" PatchCheckMurder", () => CheatToggles.patchCheckMurder, x => CheatToggles.patchCheckMurder = x),
             }, new List<SubmenuInfo> {
             new SubmenuInfo("Murder", false, new List<ToggleInfo>() {
                 new ToggleInfo(" MurderPlayer", () => CheatToggles.murderPlayer, x => CheatToggles.murderPlayer = x),

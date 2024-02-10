@@ -11,6 +11,8 @@ public static class ImpostorCheats_PlayerControl_CmdCheckMurder_Postfix
     //Prefix patch of PlayerControl.CmdCheckMurder to bypass anticheat
     public static bool Prefix(PlayerControl __instance, PlayerControl target){
 
+        if (!CheatToggles.patchCheckMurder) return true;
+        
         __instance.isKilling = false;
 
 		if (!__instance.Data.Role.IsValidTarget(target.Data))

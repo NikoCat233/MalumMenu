@@ -8,6 +8,7 @@ namespace MalumMenu
         public static bool teleportPlayer;
         public static bool teleportCursor;
         public static bool reportBody;
+        public static bool patchCheckMurder = true;
         public static bool murderPlayer;
         public static bool murderAll;
 
